@@ -61,7 +61,7 @@ pipeline {
             steps {
                 powershell """
                 \$source = "${env.WORKSPACE}\\source-code\\target"
-                \$destination = "${env.WORKSPACE}\\${env.JOB_NAME}-build${env.BUILD_NUMBER}.zip"
+                \$destination = "C:\\Users\\pavan\\OneDrive\\Desktop\\DevOps\\Jenkins\\Builds\\${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
 
                 if (Test-Path \$destination) { Remove-Item \$destination -Force }
 
@@ -74,8 +74,8 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${env.ARTIFACTORY_CREDS}", usernameVariable: 'ART_USER', passwordVariable: 'ART_PASS')]) {
                     bat """
-                    curl -v -u %ART_USER%:%ART_PASS% -T "${env.WORKSPACE}\\${env.JOB_NAME}-build%BUILD_NUMBER%.zip" ^
-                    "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/%BUILD_NUMBER%/${env.JOB_NAME}.zip"
+                    curl -v -u %ART_USER%:%ART_PASS% -T "C:\\Users\\pavan\\OneDrive\\Desktop\\DevOps\\Jenkins\\Builds\\${env.JOB_NAME}-${env.BUILD_NUMBER}.zip" ^
+                    "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_NUMBER}/${env.JOB_NAME}.zip"
                     """
                 }
             }
