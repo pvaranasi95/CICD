@@ -1,0 +1,6 @@
+git_repo_url: "https://github.com/pvaranasi95/Adressbook.git"
+workspace: "C:\\Users\\pavan\\OneDrive\\Desktop\\DevOps\\Jenkins\\Builds"
+artifactory_repo: "adressbook"
+artifactory_url: "http://localhost:8082"
+artifactory_credentials: "Artifactory"
+email_notify: "pavanvaranasi95@gmail.com,radha.medavarapu193@gmail.com"
