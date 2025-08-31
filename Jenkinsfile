@@ -6,13 +6,26 @@ pipeline {
         maven 'Maven'
     }
 
+    environment {
+        SOURCE_REPO   = "https://github.com/pvaranasi95/CICD.git"
+        SOURCE_BRANCH = "main"
+        PROP_FILE     = "Properties/Adressbook_Properies.yaml"
+    }
+
     stages {
         stage('Read Config') {
             steps {
                 script {
-                    def props = readYaml file: "${env.JOB_NAME}_properties.yaml"
+                    // Checkout the repo that contains Jenkinsfile + properties
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: env.SOURCE_BRANCH]],
+                        userRemoteConfigs: [[url: env.SOURCE_REPO]]
+                    ])
 
-                    // Save to env vars
+                    // Load properties YAML from repo
+                    def props = readYaml file: "${env.PROP_FILE}"
+
+                    // Export variables
                     env.GIT_REPO_URL      = props.git_repo_url
                     env.WORKSPACE_PATH    = props.workspace
                     env.ARTIFACTORY_REPO  = props.artifactory_repo
@@ -20,33 +33,21 @@ pipeline {
                     env.ARTIFACTORY_CREDS = props.artifactory_credentials
                     env.Email_Notify      = props.email_notify
 
-                    echo "Git Repo URL: ${env.GIT_REPO_URL}"
-                    echo "Workspace Path: ${env.WORKSPACE_PATH}"
-                    echo "Artifactory Repo: ${env.ARTIFACTORY_REPO}"
-                    echo "Artifactory URL: ${env.ARTIFACTORY_URL}"
-                    echo "Credentials ID: ${env.ARTIFACTORY_CREDS}"
-                    echo "Email Notify: ${env.Email_Notify}"
+                    echo "✅ Loaded props from ${env.PROP_FILE}"
                 }
             }
         }
 
-        stage('Git checkout') {
+        stage('Git checkout Source Code') {
             steps {
-                checkout scmGit(
+                checkout([$class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    extensions: [],
                     userRemoteConfigs: [[url: "${env.GIT_REPO_URL}"]]
-                )
+                ])
             }
         }
 
-        stage('Maven Validate') {
-            steps {
-                bat "mvn validate"
-            }
-        }
-
-        stage('Maven Package') {
+        stage('Maven Build') {
             steps {
                 bat "mvn clean install"
             }
@@ -74,40 +75,6 @@ pipeline {
                     """
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            emailext(
-                subject: "✅ SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """
-                <p>Hello Team,</p>
-                <p>The Jenkins job <b>${env.JOB_NAME}</b> has completed <span style='color:green'><b>SUCCESSFULLY</b></span>.</p>
-                <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
-                <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                """,
-                mimeType: 'text/html',
-                to: "${env.Email_Notify}",
-            )
-        }
-
-        failure {
-            emailext(
-                subject: "❌ FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """
-                <p>Hello Team,</p>
-                <p>The Jenkins job <b>${env.JOB_NAME}</b> has <span style='color:red'><b>FAILED</b></span>.</p>
-                <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
-                <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                """,
-                mimeType: 'text/html',
-                to: "${env.Email_Notify}",
-            )
-        }
-
-        always {
-            echo "Email sent with build status"
         }
     }
 }
