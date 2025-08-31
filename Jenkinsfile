@@ -71,7 +71,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "${env.ARTIFACTORY_CREDS}", usernameVariable: 'ART_USER', passwordVariable: 'ART_PASS')]) {
                     bat """
                     curl -v -u %ART_USER%:%ART_PASS% -T "${env.WORKSPACE_PATH}\\${env.JOB_NAME}-build%BUILD_NUMBER%.zip" ^
-                    "${env.ARTIFACTORY_URL}/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/%BUILD_NUMBER%/${env.JOB_NAME}.zip"
+                    "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/%BUILD_NUMBER%/${env.JOB_NAME}.zip"
                     """
                 }
             }
