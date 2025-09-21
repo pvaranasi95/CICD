@@ -13,7 +13,7 @@ pipeline {
         JIRA_URL       = 'https://pavan-varanasi.atlassian.net'
         JIRA_PROJECT   = 'DevOps'
         JIRA_ISSUE_TYPE= 'Status'
-        JIRA_CREDENTIALS = 'Jira-credentials'
+        JIRA_CREDENTIALS = 'Jira'
         BUILD_OUTPUT_DIR = "${env.WORKSPACE}\\Builds"
     }
 
