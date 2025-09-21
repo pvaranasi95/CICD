@@ -11,9 +11,9 @@ pipeline {
         CONFIG_BRANCH     = "main"
         CONFIG_FILE       = "Properties/Adressbook_Properies.yaml"
         JIRA_URL          = 'https://pavan-varanasi.atlassian.net'
-        JIRA_PROJECT      = 'DEVOPS'              // Jira project key
-        JIRA_ISSUE_TYPE   = 'Task'               // Valid Jira issue type
-        JIRA_CREDENTIALS  = 'Jira'               // Jenkins Jira credential ID
+        JIRA_PROJECT      = 'DEVOPS'              
+        JIRA_ISSUE_TYPE   = 'Task'               
+        JIRA_CREDENTIALS  = 'Jira'               
         BUILD_OUTPUT_DIR  = "${env.WORKSPACE}\\Builds"
     }
 
@@ -25,10 +25,8 @@ pipeline {
                         branches: [[name: env.CONFIG_BRANCH]],
                         userRemoteConfigs: [[url: env.CONFIG_REPO]]
                     ])
-
                     script {
                         def props = readYaml file: "${env.CONFIG_FILE}"
-
                         env.SOURCE_REPO       = props.git_repo_url
                         env.SOURCE_BRANCH     = props.git_branch ?: "main"
                         env.BUILD_WORKDIR     = props.workspace ?: "source-code"
@@ -36,7 +34,6 @@ pipeline {
                         env.ARTIFACTORY_URL   = props.artifactory_url
                         env.ARTIFACTORY_CREDS = props.artifactory_credentials
                         env.EMAIL_NOTIFY      = props.email_notify
-
                         echo "✅ Loaded config from ${env.CONFIG_FILE}"
                     }
                 }
@@ -90,36 +87,40 @@ pipeline {
 
     post {
         success {
-            script { safeCreateJira("Build Successful", currentBuild) }
+            script {
+                def description = """Jenkins Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+Status: SUCCESS
+URL: ${env.BUILD_URL}"""
+                safeCreateJira("Build Successful: ${env.JOB_NAME}", description)
+            }
         }
         failure {
-            script { safeCreateJira("Build Failed", currentBuild) }
+            script {
+                def description = """Jenkins Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+Status: FAILURE
+URL: ${env.BUILD_URL}"""
+                safeCreateJira("Build Failed: ${env.JOB_NAME}", description)
+            }
         }
         unstable {
-            script { safeCreateJira("Build Unstable", currentBuild) }
+            script {
+                def description = """Jenkins Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+Status: UNSTABLE
+URL: ${env.BUILD_URL}"""
+                safeCreateJira("Build Unstable: ${env.JOB_NAME}", description)
+            }
         }
     }
 }
 
-// Safe Jira creation with error handling
-def safeCreateJira(String title, build) {
+// --- Jira helper functions ---
+
+def safeCreateJira(String summary, String description) {
     try {
-        def description = """Jenkins Job: ${build.fullDisplayName}
-Build Number: ${build.number}
-Status: ${build.currentResult}
-URL: ${build.absoluteUrl}"""
-
-        createJiraIssue(title, description)
-    } catch (err) {
-        echo "⚠️ Failed to create Jira issue: ${err}"
-    }
-}
-
-// Create Jira issue using Jenkins Jira plugin
-def createJiraIssue(String summary, String description) {
-    def issue = createJiraIssue(
-        site: 'Jira',  // Jira site ID in Jenkins
-        issue: [
+        def payload = [
             fields: [
                 project   : [key: env.JIRA_PROJECT],
                 summary   : summary,
@@ -127,7 +128,18 @@ def createJiraIssue(String summary, String description) {
                 issuetype : [name: env.JIRA_ISSUE_TYPE]
             ]
         ]
-    )
 
-    echo "✅ Jira issue created: ${issue.key}"
+        def response = httpRequest(
+            httpMode: 'POST',
+            contentType: 'APPLICATION_JSON',
+            acceptType: 'APPLICATION_JSON',
+            url: "${env.JIRA_URL}/rest/api/3/issue",
+            authentication: env.JIRA_CREDENTIALS,
+            requestBody: groovy.json.JsonOutput.toJson(payload)
+        )
+
+        echo "✅ Jira response: ${response.content}"
+    } catch (err) {
+        echo "⚠️ Failed to create Jira issue: ${err}"
+    }
 }
