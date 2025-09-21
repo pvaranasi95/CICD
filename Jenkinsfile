@@ -7,14 +7,14 @@ pipeline {
     }
 
     environment {
-        CONFIG_REPO    = "https://github.com/pvaranasi95/CICD.git"
-        CONFIG_BRANCH  = "main"
-        CONFIG_FILE    = "Properties/Adressbook_Properies.yaml"
-        JIRA_URL       = 'https://pavan-varanasi.atlassian.net'
-        JIRA_PROJECT   = 'DevOps'
-        JIRA_ISSUE_TYPE= 'Status'
-        JIRA_CREDENTIALS = 'Jira'
-        BUILD_OUTPUT_DIR = "${env.WORKSPACE}\\Builds"
+        CONFIG_REPO       = "https://github.com/pvaranasi95/CICD.git"
+        CONFIG_BRANCH     = "main"
+        CONFIG_FILE       = "Properties/Adressbook_Properies.yaml"
+        JIRA_URL          = 'https://pavan-varanasi.atlassian.net'
+        JIRA_PROJECT      = 'DEVOPS'              // Jira project key
+        JIRA_ISSUE_TYPE   = 'Task'               // Valid Jira issue type
+        JIRA_CREDENTIALS  = 'Jira'               // Jenkins Jira credential ID
+        BUILD_OUTPUT_DIR  = "${env.WORKSPACE}\\Builds"
     }
 
     stages {
@@ -90,44 +90,44 @@ pipeline {
 
     post {
         success {
-            script { safeCreateJira("Build Successful", "Build completed successfully.") }
+            script { safeCreateJira("Build Successful", currentBuild) }
         }
         failure {
-            script { safeCreateJira("Build Failed", "Build failed. Check Jenkins console.") }
+            script { safeCreateJira("Build Failed", currentBuild) }
         }
         unstable {
-            script { safeCreateJira("Build Unstable", "Build is unstable. Review test results.") }
+            script { safeCreateJira("Build Unstable", currentBuild) }
         }
     }
 }
 
 // Safe Jira creation with error handling
-def safeCreateJira(String summary, String description) {
+def safeCreateJira(String title, build) {
     try {
-        createJiraIssue(summary, description)
+        def description = """Jenkins Job: ${build.fullDisplayName}
+Build Number: ${build.number}
+Status: ${build.currentResult}
+URL: ${build.absoluteUrl}"""
+
+        createJiraIssue(title, description)
     } catch (err) {
         echo "⚠️ Failed to create Jira issue: ${err}"
     }
 }
 
+// Create Jira issue using Jenkins Jira plugin
 def createJiraIssue(String summary, String description) {
-    def payload = [
-        fields: [
-            project: [key: env.JIRA_PROJECT],
-            summary: summary,
-            description: description,
-            issuetype: [name: env.JIRA_ISSUE_TYPE]
+    def issue = createJiraIssue(
+        site: 'Jira',  // Jira site ID in Jenkins
+        issue: [
+            fields: [
+                project   : [key: env.JIRA_PROJECT],
+                summary   : summary,
+                description: description,
+                issuetype : [name: env.JIRA_ISSUE_TYPE]
+            ]
         ]
-    ]
-
-    def response = httpRequest(
-        httpMode: 'POST',
-        contentType: 'APPLICATION_JSON',
-        acceptType: 'APPLICATION_JSON',
-        url: "${env.JIRA_URL}/rest/api/3/issue",
-        authentication: env.JIRA_CREDENTIALS,
-        requestBody: groovy.json.JsonOutput.toJson(payload)
     )
 
-    echo "✅ Jira response: ${response.content}"
+    echo "✅ Jira issue created: ${issue.key}"
 }
