@@ -10,6 +10,10 @@ pipeline {
         CONFIG_REPO   = "https://github.com/pvaranasi95/CICD.git"
         CONFIG_BRANCH = "main"
         CONFIG_FILE   = "Properties/Adressbook_Properies.yaml"
+        JIRA_URL = 'https://pavan-varanasi.atlassian.net'
+        JIRA_PROJECT = 'DevOps'
+        JIRA_ISSUE_TYPE = 'Status'
+        JIRA_CREDENTIALS = 'Jira-credentials'
     }
 
     stages {
@@ -81,4 +85,45 @@ pipeline {
             }
         }
     }
+       post {
+        success {
+            script {
+                createJiraIssue("Build Successful", "Build completed successfully.")
+            }
+        }
+        failure {
+            script {
+                createJiraIssue("Build Failed", "Build failed. Check Jenkins console.")
+            }
+        }
+        unstable {
+            script {
+                createJiraIssue("Build Unstable", "Build is unstable. Review test results.")
+            }
+        }
+    }
+}
+
+// Function to create Jira Issue
+def createJiraIssue(String summary, String description) {
+    def payload = [
+        fields: [
+            project: [key: env.JIRA_PROJECT],
+            summary: summary,
+            description: description,
+            issuetype: [name: env.JIRA_ISSUE_TYPE]
+        ]
+    ]
+
+    def response = httpRequest(
+        httpMode: 'POST',
+        contentType: 'APPLICATION_JSON',
+        acceptType: 'APPLICATION_JSON',
+        url: "${env.JIRA_URL}/rest/api/3/issue",
+        authentication: 'Jira-credentials', // Jenkins credentials ID
+        requestBody: groovy.json.JsonOutput.toJson(payload)
+    )
+
+    echo "Jira response: ${response.content}"
+}
 }
