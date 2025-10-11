@@ -9,7 +9,7 @@ pipeline {
     environment {
         CONFIG_REPO       = "https://github.com/pvaranasi95/CICD.git"
         CONFIG_BRANCH     = "main"
-        CONFIG_FILE       = "Properties/Adressbook_Properies.yaml"
+        CONFIG_FILE       = "Properties/${env.JOB_NAME}_Properies.yaml"
         BUILD_OUTPUT_DIR  = "${env.WORKSPACE}\\Builds"
     }
 
@@ -40,7 +40,6 @@ pipeline {
             steps {
                 dir(env.BUILD_WORKDIR) {
                     checkout([$class: 'GitSCM',
-                        branches: [[name: "*/${env.SOURCE_BRANCH}"]],
                         userRemoteConfigs: [[url: "${env.SOURCE_REPO}"]]
                     ])
                 }
