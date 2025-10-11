@@ -1,50 +1,60 @@
 pipeline {
     agent any
 
+    }
+
     tools {
         jdk 'JDK11'
         maven 'Maven'
     }
 
+    environment {
+        BUILD_OUTPUT_BASE = "${env.WORKSPACE}/${params.FOLDER_NAME}"
+    }
+
     stages {
-        stage('Load Config') {
+
+        stage('Run Only for Release Branches') {
+            when {
+                expression { env.BRANCH_NAME.startsWith('release/') }
+            }
             steps {
                 script {
-                    def configFile = "Properties/Test1_Properies.yaml"
-                    echo "Loading config: ${configFile}"
+                    echo "✅ Running pipeline for release branch: ${env.BRANCH_NAME}"
+                }
+            }
+        }
+
+        stage('Load Config') {
+            when {
+                expression { env.BRANCH_NAME.startsWith('release/') }
+            }
+            steps {
+                script {
+                    // Checkout the config repo
+                    dir("cicd-config") {
+                        checkout([$class: 'GitSCM',
+                            branches: [[name: 'main']],
+                            userRemoteConfigs: [[url: 'https://github.com/pvaranasi95/CICD.git']]
+                        ])
+                    }
+
+                    // Load YAML config for this job
+                    def configFile = "cicd-config/Properties/${env.JOB_NAME}_Properies.yaml"
                     def props = readYaml file: configFile
+                    echo "✅ Loaded config from ${configFile}"
 
                     // Local variables
-                    def BUILD_WORKDIR = props.workspace ?: "source-code"
-                    def SOURCE_REPO   = props.git_repo_url
-                    def SOURCE_BRANCH = props.git_branch ?: "main"
-
-                    echo "Workspace: ${BUILD_WORKDIR}, Repo: ${SOURCE_REPO}, Branch: ${SOURCE_BRANCH}"
-
-                    // Do something with these variables in the same script block
+                    BUILD_WORKDIR     = props.workspace ?: "source-code"
+                    SOURCE_REPO       = props.git_repo_url
+                    SOURCE_BRANCH     = props.git_branch ?: env.BRANCH_NAME
+                    ARTIFACTORY_URL   = props.artifactory_url
+                    ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
+                    ARTIFACTORY_CREDS = props.artifactory_credentials
                 }
             }
         }
 
-        stage('Build') {
-            steps {
-                script {
-                    bat "mvn clean install"
-                }
-            }
-        }
-
-        stage('Zip') {
-            steps {
-                script {
-                    powershell """
-                        if (!(Test-Path -Path '${env.WORKSPACE}\\Builds')) { 
-                            New-Item -ItemType Directory -Path '${env.WORKSPACE}\\Builds' 
-                        }
-                        Compress-Archive -Path '${env.WORKSPACE}\\target\\*' -DestinationPath '${env.WORKSPACE}\\Builds\\${env.JOB_NAME}-${env.BUILD_NUMBER}.zip' -Force
-                    """
-                }
-            }
-        }
-    }
-}
+        stage('Checkout Source Code') {
+            when {
+                expression { env.BRANCH_NAME.startsWith('releas_
