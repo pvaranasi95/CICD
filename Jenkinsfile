@@ -8,58 +8,61 @@ pipeline {
 
     environment {
         BUILD_OUTPUT_DIR  = "${env.WORKSPACE}\\Builds"
+        CONFIG_REPO       = "https://github.com/pvaranasi95/CICD.git"
+        CONFIG_BRANCH     = "main"
+        PROP_FILE         = "Properties/Adressbook_Properies.yaml"
     }
 
     stages {
-stage('Read Config') {
-    steps {
-        dir("CICD") {
-            checkout([$class: 'GitSCM',
-                branches: [[name: 'main']],
-                userRemoteConfigs: [[url: 'https://github.com/pvaranasi95/CICD.git']]
-            ])
-            script {
-                def props = readYaml file: "Properties/Adressbook_Properies.yaml"
+        stage('Read Config') {
+            steps {
+                dir("CICD") {
+                    // Checkout the config repository
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: env.CONFIG_BRANCH]],
+                        userRemoteConfigs: [[url: env.CONFIG_REPO]]
+                    ])
+                    script {
+                        def props = readYaml file: env.PROP_FILE
 
-                // Set env variables for use in all stages
-                env.SOURCE_REPO       = props.git_repo_url
-                env.SOURCE_BRANCH     = props.git_branch
-                env.BUILD_WORKDIR     = props.workspace ?: "release-source"
-                env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
-                env.ARTIFACTORY_URL   = props.artifactory_url
-                env.ARTIFACTORY_CREDS = props.artifactory_credentials
-                env.EMAIL_NOTIFY      = props.email_notify
+                        // Set env variables for all stages
+                        env.SOURCE_REPO       = props.git_repo_url
+                        env.SOURCE_BRANCH     = props.git_branch
+                        env.BUILD_WORKDIR     = props.workspace ?: "release-source"
+                        env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
+                        env.ARTIFACTORY_URL   = props.artifactory_url
+                        env.ARTIFACTORY_CREDS = props.artifactory_credentials
+                        env.EMAIL_NOTIFY      = props.email_notify
 
-                echo "SOURCE_REPO       = ${env.SOURCE_REPO}"
-                echo "SOURCE_BRANCH     = ${env.SOURCE_BRANCH}"
-                echo "BUILD_WORKDIR     = ${env.BUILD_WORKDIR}"
-                echo "ARTIFACTORY_REPO  = ${env.ARTIFACTORY_REPO}"
-                echo "ARTIFACTORY_URL   = ${env.ARTIFACTORY_URL}"
-                echo "ARTIFACTORY_CREDS = ${env.ARTIFACTORY_CREDS}"
-                echo "EMAIL_NOTIFY      = ${env.EMAIL_NOTIFY}"
+                        echo "✅ Loaded config from ${env.PROP_FILE}"
+                        echo "SOURCE_REPO       = ${env.SOURCE_REPO}"
+                        echo "SOURCE_BRANCH     = ${env.SOURCE_BRANCH}"
+                        echo "BUILD_WORKDIR     = ${env.BUILD_WORKDIR}"
+                        echo "ARTIFACTORY_REPO  = ${env.ARTIFACTORY_REPO}"
+                        echo "ARTIFACTORY_URL   = ${env.ARTIFACTORY_URL}"
+                        echo "ARTIFACTORY_CREDS = ${env.ARTIFACTORY_CREDS}"
+                        echo "EMAIL_NOTIFY      = ${env.EMAIL_NOTIFY}"
+                    }
+                }
             }
         }
-    }
-}
-
 
         stage('Checkout Release Branch') {
             steps {
-                script {
-                    dir(BUILD_WORKDIR) {
-                        checkout([$class: 'GitSCM',
-                            branches: [[name: "*/${SOURCE_BRANCH}"]],
-                            userRemoteConfigs: [[url: SOURCE_REPO]]
-                        ])
-                        echo "✅ Checked out ${SOURCE_BRANCH} from ${SOURCE_REPO} into ${BUILD_WORKDIR}"
-                    }
+                dir(env.BUILD_WORKDIR) {
+                    // Checkout the source repo release branch
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: "*/${env.SOURCE_BRANCH}"]],
+                        userRemoteConfigs: [[url: env.SOURCE_REPO]]
+                    ])
+                    echo "✅ Checked out ${env.SOURCE_BRANCH} from ${env.SOURCE_REPO} into ${env.BUILD_WORKDIR}"
                 }
             }
         }
 
         stage('Maven Build') {
             steps {
-                dir(BUILD_WORKDIR) {
+                dir(env.BUILD_WORKDIR) {
                     bat "mvn clean install"
                 }
             }
@@ -68,29 +71,26 @@ stage('Read Config') {
         stage('Zip Build Output') {
             steps {
                 script {
-                    def zipFile = "${BUILD_OUTPUT_DIR}\\${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
+                    env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}\\${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
                     powershell """
-                        if (!(Test-Path -Path '${BUILD_OUTPUT_DIR}')) { 
-                            New-Item -ItemType Directory -Path '${BUILD_OUTPUT_DIR}' 
+                        if (!(Test-Path -Path '${env.BUILD_OUTPUT_DIR}')) { 
+                            New-Item -ItemType Directory -Path '${env.BUILD_OUTPUT_DIR}' 
                         }
-                        Compress-Archive -Path '${env.WORKSPACE}\\${BUILD_WORKDIR}\\target\\*' `
-                                         -DestinationPath '${zipFile}' -Force
+                        Compress-Archive -Path '${env.WORKSPACE}\\${env.BUILD_WORKDIR}\\target\\*' `
+                                         -DestinationPath '${env.ZIP_FILE_PATH}' -Force
                     """
-                    ZIP_FILE_PATH = zipFile
-                    echo "✅ Build output zipped to ${zipFile}"
+                    echo "✅ Build output zipped to ${env.ZIP_FILE_PATH}"
                 }
             }
         }
 
         stage('Upload to Artifactory') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: ARTIFACTORY_CREDS, usernameVariable: 'ART_USER', passwordVariable: 'ART_PASS')]) {
-                        bat """
-                            curl -u %ART_USER%:%ART_PASS% -T "${ZIP_FILE_PATH}" ^
-                            "${ARTIFACTORY_URL}/artifactory/${ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_NUMBER}/${env.JOB_NAME}.zip"
-                        """
-                    }
+                withCredentials([usernamePassword(credentialsId: env.ARTIFACTORY_CREDS, usernameVariable: 'ART_USER', passwordVariable: 'ART_PASS')]) {
+                    bat """
+                        curl -u %ART_USER%:%ART_PASS% -T "${env.ZIP_FILE_PATH}" ^
+                        "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_NUMBER}/${env.JOB_NAME}.zip"
+                    """
                 }
             }
         }
