@@ -34,7 +34,7 @@ pipeline {
 
                     // Download using JFrog CLI
                     bat """
-                    jf rt dl "${params.ARTIFACTORY_REPONAME}/${params.ARTIFACTORY_FOLDER}/*" "${params.LOCAL_PATH}\\"
+            jf rt dl "Test1//*" "C:\\artifacts\\" --flat=false --url=http://localhost:8082 --user=admin --password=%ARTIFACTORY_CRED_PSW%
                     """
                 }
                 echo "Artifacts downloaded successfully to ${params.LOCAL_PATH}"
