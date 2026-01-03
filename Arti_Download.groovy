@@ -41,7 +41,7 @@ stages {
         stage('Artifactory Download') {
     steps {
         bat """
-            jfrog rt dl params.$ARTIFACTORY_REPONAME\ params.$LOCAL_PATH
+            jfrog rt dl params.$ARTIFACTORY_REPONAME/ params.$LOCAL_PATH
         """
       echo "Artifacts downloaded Successfully"
     }
