@@ -34,7 +34,7 @@ pipeline {
 
                     // Download using JFrog CLI
                     bat """
-                    jfrog rt dl "${params.ARTIFACTORY_REPONAME}/${params.ARTIFACTORY_FOLDER}/" "${params.LOCAL_PATH}/" --flat=false
+                    jf rt dl "${params.ARTIFACTORY_REPONAME}/${params.ARTIFACTORY_FOLDER}/${params.ARTIFACTORY_FILE}" "${params.LOCAL_PATH}\\"
                     """
                 }
                 echo "Artifacts downloaded successfully to ${params.LOCAL_PATH}"
