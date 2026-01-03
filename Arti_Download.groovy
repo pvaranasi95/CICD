@@ -1,16 +1,18 @@
 pipeline {
     agent any
-        environment {
-    ARTIFACTORY_CRED = credentials('Jfrog_Artifactory')
-}
-
-
+    environment {
+        ARTIFACTORY_CRED = credentials('Jfrog_Artifactory')
+    }
     tools {
         jdk 'JDK17'
         maven 'Maven'
     }
-stages {
-
+    parameters {
+        string(name: 'ARTIFACTORY_REPONAME', defaultValue: 'Test1', description: 'Artifactory repository to download')
+        string(name: 'ARTIFACTORY_FOLDER', defaultValue: '', description: 'Folder inside repo')
+        string(name: 'LOCAL_PATH', defaultValue: 'C:\\artifacts', description: 'Local folder to save artifacts')
+    }
+    stages {
         stage('Git checkout') {
             steps {
                 checkout scmGit(
@@ -24,29 +26,19 @@ stages {
             }
         }
 
-//         stage('Sonar scan') {
-//     steps {
-//         withCredentials([string(credentialsId: 'Sonar', variable: 'SONAR_TOKEN')]) {
-//             bat """
-//             mvn -U verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar ^
-//              -Dsonar.projectKey=petclinic ^
-//              -Dsonar.projectName=petclinic ^
-//              -Dsonar.host.url=http://localhost:9000 ^
-//              -Dsonar.token=%SONAR_TOKEN%
-//             """
-//         }
-//     }
-// }
-        
         stage('Artifactory Download') {
-    steps {
-        bat """
-            jfrog rt dl params.$ARTIFACTORY_REPONAME/ params.$LOCAL_PATH
-        """
-      echo "Artifacts downloaded Successfully"
-    }
-}
+            steps {
+                script {
+                    // Ensure local path exists
+                    bat "mkdir \"${params.LOCAL_PATH}\" || exit 0"
 
-
+                    // Download using JFrog CLI
+                    bat """
+                    jfrog rt dl "${params.ARTIFACTORY_REPONAME}/${params.ARTIFACTORY_FOLDER}/" "${params.LOCAL_PATH}/" --flat=false
+                    """
+                }
+                echo "Artifacts downloaded successfully to ${params.LOCAL_PATH}"
+            }
+        }
     }
 }
