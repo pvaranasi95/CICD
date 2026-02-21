@@ -17,7 +17,7 @@ pipeline {
 
 script {
      echo "${env.JOB_NAME}"
-    def yamlPath = "Properties/${env.JOB_NAME}_Properties.yaml"
+    def yamlPath = "./Properties/${env.JOB_NAME}_Properties.yaml"
 
     if (!fileExists(yamlPath)) {
         error "❌ Config file not found: ${yamlPath}"
