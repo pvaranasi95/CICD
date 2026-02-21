@@ -23,7 +23,10 @@ pipeline {
                 script {
                     // Strip @2 suffix in workspace
                     def cleanJobName = env.JOB_NAME.split('@')[0]
-                    env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
+                    echo "JOB_NAME = ${cleanJobName}"
+                    env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml
+
+"
 
                     // Safe YAML path
                     def yamlPath = "CICD/${env.PROP_FILE}"
