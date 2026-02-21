@@ -1,31 +1,26 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'JDK11'
-        maven 'Maven'
-    }
-
     environment {
-        BUILD_OUTPUT_DIR  = "${env.WORKSPACE}\\Builds"
-        CONFIG_REPO       = "https://github.com/pvaranasi95/CICD.git"
-        CONFIG_BRANCH     = "main"
-        PROP_FILE         = "Properties/Adressbook_Properies.yaml"
+        BUILD_OUTPUT_DIR = "${env.WORKSPACE}/Builds"
+        CONFIG_REPO      = "https://github.com/pvaranasi95/CICD.git"
+        CONFIG_BRANCH    = "main"
+        PROP_FILE        = "Properties/Adressbook_Properies.yaml"
     }
 
     stages {
-        stage('Read Config') {
+
+        stage('Load Build Configuration') {
             steps {
                 dir("CICD") {
-                    // Checkout the config repository
                     checkout([$class: 'GitSCM',
                         branches: [[name: env.CONFIG_BRANCH]],
                         userRemoteConfigs: [[url: env.CONFIG_REPO]]
                     ])
+
                     script {
                         def props = readYaml file: env.PROP_FILE
 
-                        // Set env variables for all stages
                         env.SOURCE_REPO       = props.git_repo_url
                         env.SOURCE_BRANCH     = props.git_branch
                         env.BUILD_WORKDIR     = props.workspace ?: "release-source"
@@ -34,70 +29,88 @@ pipeline {
                         env.ARTIFACTORY_CREDS = props.artifactory_credentials
                         env.EMAIL_NOTIFY      = props.email_notify
 
-                        echo "✅ Loaded config from ${env.PROP_FILE}"
-                        echo "SOURCE_REPO       = ${env.SOURCE_REPO}"
-                        echo "SOURCE_BRANCH     = ${env.SOURCE_BRANCH}"
-                        echo "BUILD_WORKDIR     = ${env.BUILD_WORKDIR}"
-                        echo "ARTIFACTORY_REPO  = ${env.ARTIFACTORY_REPO}"
-                        echo "ARTIFACTORY_URL   = ${env.ARTIFACTORY_URL}"
-                        echo "ARTIFACTORY_CREDS = ${env.ARTIFACTORY_CREDS}"
-                        echo "EMAIL_NOTIFY      = ${env.EMAIL_NOTIFY}"
+                        echo "✅ Config Loaded"
+                        echo "Repo: ${env.SOURCE_REPO}"
+                        echo "Branch: ${env.SOURCE_BRANCH}"
                     }
                 }
             }
         }
 
-        stage('Checkout Release Branch') {
+        stage('Checkout Source') {
             steps {
                 dir(env.BUILD_WORKDIR) {
-                    // Checkout the source repo release branch
                     checkout([$class: 'GitSCM',
                         branches: [[name: "*/${env.SOURCE_BRANCH}"]],
                         userRemoteConfigs: [[url: env.SOURCE_REPO]]
                     ])
-                    echo "✅ Checked out ${env.SOURCE_BRANCH} from ${env.SOURCE_REPO} into ${env.BUILD_WORKDIR}"
                 }
             }
         }
 
-        stage('Maven Build') {
+        stage('Build Application') {
             steps {
                 dir(env.BUILD_WORKDIR) {
-                    bat "mvn clean install"
+                    sh 'mvn clean install -DskipTests'
                 }
             }
         }
 
-        stage('Zip Build Output') {
+        stage('Package Artifact') {
             steps {
                 script {
-                    env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}\\${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
-                    powershell """
-                        if (!(Test-Path -Path '${env.BUILD_OUTPUT_DIR}')) { 
-                            New-Item -ItemType Directory -Path '${env.BUILD_OUTPUT_DIR}' 
-                        }
-                        Compress-Archive -Path '${env.WORKSPACE}\\${env.BUILD_WORKDIR}\\target\\*' `
-                                         -DestinationPath '${env.ZIP_FILE_PATH}' -Force
+                    env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}/${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
+
+                    sh """
+                    mkdir -p ${env.BUILD_OUTPUT_DIR}
+                    zip -r ${env.ZIP_FILE_PATH} ${env.WORKSPACE}/${env.BUILD_WORKDIR}/target/*
                     """
-                    echo "✅ Build output zipped to ${env.ZIP_FILE_PATH}"
+
+                    echo "✅ Artifact packaged: ${env.ZIP_FILE_PATH}"
                 }
             }
         }
 
         stage('Upload to Artifactory') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.ARTIFACTORY_CREDS, usernameVariable: 'ART_USER', passwordVariable: 'ART_PASS')]) {
-                    bat """
-                        curl -u %ART_USER%:%ART_PASS% -T "${env.ZIP_FILE_PATH}" ^
-                        "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_NUMBER}/${env.JOB_NAME}.zip"
+                withCredentials([usernamePassword(
+                    credentialsId: env.ARTIFACTORY_CREDS,
+                    usernameVariable: 'ART_USER',
+                    passwordVariable: 'ART_PASS'
+                )]) {
+                    sh """
+                    curl -u $ART_USER:$ART_PASS -T "${env.ZIP_FILE_PATH}" \
+                    "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_NUMBER}/${env.JOB_NAME}.zip"
                     """
                 }
             }
         }
     }
 
-    post {
-        success { echo "✅ Build ${env.BUILD_NUMBER} completed successfully." }
-        failure { echo "❌ Build ${env.BUILD_NUMBER} failed." }
+ post {
+    always {
+        script {
+            def jenkinsBuildData = [
+                job_name: env.JOB_NAME,
+                build_number: env.BUILD_NUMBER.toInteger(),
+                status: currentBuild.currentResult,
+                timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC')),
+                duration: currentBuild.duration,
+                url: env.BUILD_URL
+            ]
+
+            def jsonBody = groovy.json.JsonOutput.toJson(jenkinsBuildData)
+
+            echo "Sending build data to Elasticsearch: ${jsonBody}"
+
+            node {
+                sh """
+                curl -X POST "http://host.docker.internal:9200/jenkins/_doc" \
+                     -H "Content-Type: application/json" \
+                     -d '${jsonBody}'
+                """
+            }
+        }
     }
+}
 }
