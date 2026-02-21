@@ -10,50 +10,44 @@ pipeline {
 
     stages {
 
-        stage('Load Build Configuration') {
-            steps {
-                dir("CICD") {
-                    // Checkout the central config repo
-                    checkout([$class: 'GitSCM',
-                        branches: [[name: env.CONFIG_BRANCH]],
-                        userRemoteConfigs: [[url: env.CONFIG_REPO]]
-                    ])
-                }
+     stage('Load Build Configuration') {
+    steps {
+        dir('CICD') {
+            // Clone central pipeline repo
+            git branch: 'main', url: 'https://github.com/pvaranasi95/CICD.git'
+        }
 
-                script {
-            // Remove @2, @3 suffix in workspace
-            def cleanJobName = env.JOB_NAME.split('@')[0]
-            
-            // Build property file path
+        script {
+            // Extract only the actual job name (strip folders and @2)
+            def jobParts = env.JOB_NAME.split('/')
+            def lastPart = jobParts[-1]          // last folder or job name
+            def cleanJobName = lastPart.split('@')[0]  // remove @2, @3 suffix
+
             env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
 
-            // Full path inside cloned repo
+            // Full path to YAML inside CICD repo
             def yamlPath = "CICD/${env.PROP_FILE}"
 
-            // Check that the file exists
+            // Safety check
             if (!fileExists(yamlPath)) {
                 error "❌ Config file not found: ${yamlPath}"
             }
 
-                    def props = readYaml file: yamlPath
+            def props = readYaml file: yamlPath
 
-                    // Set environment variables
-                    env.SOURCE_REPO       = props.git_repo_url
-                    env.SOURCE_BRANCH     = props.git_branch ?: "main"
-                    env.BUILD_WORKDIR     = props.workspace ?: "release-source"
-                    env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
-                    env.ARTIFACTORY_URL   = props.artifactory_url
-                    env.ARTIFACTORY_CREDS = props.artifactory_credentials
-                    env.EMAIL_NOTIFY      = props.email_notify
-                    env.STAGES_TO_RUN     = props.stages_to_run.join(',')
+            // Set environment variables
+            env.SOURCE_REPO       = props.git_repo_url
+            env.SOURCE_BRANCH     = props.git_branch ?: "main"
+            env.BUILD_WORKDIR     = props.workspace ?: "release-source"
+            env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
+            env.ARTIFACTORY_URL   = props.artifactory_url
+            env.ARTIFACTORY_CREDS = props.artifactory_credentials
+            env.EMAIL_NOTIFY      = props.email_notify
 
-                    echo "✅ Loaded config from ${yamlPath}"
-                    echo "Repo: ${env.SOURCE_REPO}"
-                    echo "Branch: ${env.SOURCE_BRANCH}"
-                    echo "Stages to run: ${env.STAGES_TO_RUN}"
-                }
-            }
+            echo "✅ Loaded config for ${cleanJobName} from ${yamlPath}"
         }
+    }
+}
 
         stage('Checkout Source') {
             when { expression { env.STAGES_TO_RUN.contains('checkout') } }
