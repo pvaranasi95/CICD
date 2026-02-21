@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        BUILD_OUTPUT_DIR = "${env.WORKSPACE}/Builds"
         CONFIG_REPO      = "https://github.com/pvaranasi95/CICD.git"
         CONFIG_BRANCH    = "main"
         PROP_FILE        = "" // will be set dynamically based on JOB_NAME
@@ -30,7 +29,6 @@ pipeline {
                     // Load variables
                     env.SOURCE_REPO       = props.git_repo_url
                     env.SOURCE_BRANCH     = props.git_branch ?: "main"
-                    env.BUILD_WORKDIR     = props.workspace ?: "release-source"
                     env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
                     env.ARTIFACTORY_URL   = props.artifactory_url
                     env.ARTIFACTORY_CREDS = props.artifactory_credentials
@@ -80,19 +78,19 @@ pipeline {
             }
         }
 
-        stage('Package Artifact') {
-            when { expression { env.STAGES_TO_RUN.contains('package') } }
-            steps {
-                script {
-                    env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}/${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
-                    sh """
-                    mkdir -p ${env.BUILD_OUTPUT_DIR}
-                    zip -r ${env.ZIP_FILE_PATH} ${env.WORKSPACE}/${env.BUILD_WORKDIR}/target/*
-                    """
-                    echo "✅ Artifact packaged: ${env.ZIP_FILE_PATH}"
-                }
-            }
-        }
+        // stage('Package Artifact') {
+        //     when { expression { env.STAGES_TO_RUN.contains('package') } }
+        //     steps {
+        //         script {
+        //             env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}/${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
+        //             sh """
+        //             mkdir -p ${env.BUILD_OUTPUT_DIR}
+        //             zip -r ${env.ZIP_FILE_PATH} ${env.WORKSPACE}/${env.BUILD_WORKDIR}/target/*
+        //             """
+        //             echo "✅ Artifact packaged: ${env.ZIP_FILE_PATH}"
+        //         }
+        //     }
+        // }
 
         stage('Upload to Artifactory') {
             when { expression { env.STAGES_TO_RUN.contains('upload') } }
