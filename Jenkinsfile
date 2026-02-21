@@ -26,8 +26,6 @@ pipeline {
                     echo "JOB_NAME = ${cleanJobName}"
                     env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml
 
-"
-
                     // Safe YAML path
                     def yamlPath = "CICD/${env.PROP_FILE}"
                     if (!fileExists(yamlPath)) {
