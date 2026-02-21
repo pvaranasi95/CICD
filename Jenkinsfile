@@ -16,8 +16,13 @@ pipeline {
 }
 
 script {
-     echo "${env.JOB_NAME}"
-    def yamlPath = "/Properties/${env.JOB_NAME}_Properties.yaml"
+        // Take only the first segment of JOB_NAME
+    def cleanJobName = env.JOB_NAME.split('/')[0]  // 'Petclinic/main' → 'Petclinic'
+
+    // Remove any @2 suffix (if Jenkins appends it)
+    cleanJobName = cleanJobName.split('@')[0]
+     echo "${cleanJobName}"
+    def yamlPath = "/Properties/${cleanJobName}_Properties.yaml"
 
     if (!fileExists(yamlPath)) {
         error "❌ Config file not found: ${yamlPath}"
@@ -107,7 +112,7 @@ script {
             script {
                 // Send build data to Elasticsearch
                 def jenkinsBuildData = [
-                    job_name: env.JOB_NAME,
+                    job_name: cleanJobName,
                     build_number: env.BUILD_NUMBER.toInteger(),
                     status: currentBuild.currentResult,
                     timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC')),
