@@ -1,7 +1,7 @@
 git_repo_url: "https://github.com/pvaranasi95/Petclinic.git"
 git_branch: "main"
 workspace: "petclinic-src"
-artifactory_repo: "Petclinic1"
+artifactory_repo: "Petclinic"
 artifactory_url: "http://host.docker.internal:8082"
 artifactory_credentials: "Jfrog_Artifactory"
 email_notify: "pavanvaranasi95@gmail.com,radha.medavarapu193@gmail.com"
