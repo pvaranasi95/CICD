@@ -1,6 +1,9 @@
 git_repo_url: "https://github.com/pvaranasi95/Adressbook.git"
-workspace: "C:\\Users\\pavan\\OneDrive\\Desktop\\DevOps\\Jenkins\\Builds"
+git_branch: "main"
+workspace: "Adressbook-src"
 artifactory_repo: "Adressbook"
-artifactory_url: "http://localhost:8082"
-artifactory_credentials: "Artifactory"
+artifactory_url: "http://host.docker.internal:8082"
+artifactory_credentials: "Jfrog_Artifactory"
 email_notify: "pavanvaranasi95@gmail.com,radha.medavarapu193@gmail.com"
+stages_to_run:
+  - checkout
