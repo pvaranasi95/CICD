@@ -17,11 +17,7 @@ pipeline {
 
 script {
 
-    sh "cd /var/jenkins_home/workspace/${env.JOB_NAME}/CICD/Properties"
-    def jobParts = env.JOB_NAME.split('/')
-    def lastPart = jobParts[-1]
-    def cleanJobName = lastPart.split('@')[0]
-    def yamlPath = "${env.JOB_NAME}_Properties.yaml"
+    def yamlPath = "CICD/Properties/env.JOB_NAME_Properties.yaml"
 
     if (!fileExists(yamlPath)) {
         error "❌ Config file not found: ${yamlPath}"
