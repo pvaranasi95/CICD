@@ -16,6 +16,7 @@ pipeline {
 }
 
 script {
+    sh"pwd"
         // Take only the first segment of JOB_NAME
     def cleanJobName = env.JOB_NAME.split('/')[0]  // 'Petclinic/main' → 'Petclinic'
 
