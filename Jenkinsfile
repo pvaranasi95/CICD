@@ -2,17 +2,18 @@ pipeline {
     agent any
 
     environment {
+        BUILD_OUTPUT_DIR = "${env.WORKSPACE}/Builds"
         CONFIG_REPO      = "https://github.com/pvaranasi95/CICD.git"
         CONFIG_BRANCH    = "main"
-        PROP_FILE        = "" // will be set dynamically based on JOB_NAME
+        PROP_FILE        = "" // dynamically set
     }
 
     stages {
 
         stage('Load Build Configuration') {
             steps {
-                // Clone the central config repo
                 dir("CICD") {
+                    // Checkout the central config repo
                     checkout([$class: 'GitSCM',
                         branches: [[name: env.CONFIG_BRANCH]],
                         userRemoteConfigs: [[url: env.CONFIG_REPO]]
@@ -20,25 +21,29 @@ pipeline {
                 }
 
                 script {
-                    // Set property file dynamically based on repo/job name
+                    // Strip @2 suffix in workspace
                     def cleanJobName = env.JOB_NAME.split('@')[0]
                     env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
 
-                    // Read YAML
-                    def props = readYaml file: "CICD/${env.PROP_FILE}"
+                    // Safe YAML path
+                    def yamlPath = "CICD/${env.PROP_FILE}"
+                    if (!fileExists(yamlPath)) {
+                        error "❌ Config file not found: ${yamlPath}"
+                    }
 
-                    // Load variables
+                    def props = readYaml file: yamlPath
+
+                    // Set environment variables
                     env.SOURCE_REPO       = props.git_repo_url
                     env.SOURCE_BRANCH     = props.git_branch ?: "main"
+                    env.BUILD_WORKDIR     = props.workspace ?: "release-source"
                     env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
                     env.ARTIFACTORY_URL   = props.artifactory_url
                     env.ARTIFACTORY_CREDS = props.artifactory_credentials
                     env.EMAIL_NOTIFY      = props.email_notify
+                    env.STAGES_TO_RUN     = props.stages_to_run.join(',')
 
-                    // List of stages to run
-                    env.STAGES_TO_RUN = props.stages_to_run.join(',')
-
-                    echo "✅ Loaded config from ${env.PROP_FILE}"
+                    echo "✅ Loaded config from ${yamlPath}"
                     echo "Repo: ${env.SOURCE_REPO}"
                     echo "Branch: ${env.SOURCE_BRANCH}"
                     echo "Stages to run: ${env.STAGES_TO_RUN}"
@@ -79,19 +84,21 @@ pipeline {
             }
         }
 
-        // stage('Package Artifact') {
-        //     when { expression { env.STAGES_TO_RUN.contains('package') } }
-        //     steps {
-        //         script {
-        //             env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}/${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
-        //             sh """
-        //             mkdir -p ${env.BUILD_OUTPUT_DIR}
-        //             zip -r ${env.ZIP_FILE_PATH} ${env.WORKSPACE}/${env.BUILD_WORKDIR}/target/*
-        //             """
-        //             echo "✅ Artifact packaged: ${env.ZIP_FILE_PATH}"
-        //         }
-        //     }
-        // }
+        stage('Package Artifact') {
+            when { expression { env.STAGES_TO_RUN.contains('package') } }
+            steps {
+                script {
+                    env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}/${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
+
+                    sh """
+                    mkdir -p ${env.BUILD_OUTPUT_DIR}
+                    zip -r ${env.ZIP_FILE_PATH} ${env.WORKSPACE}/${env.BUILD_WORKDIR}/target/*
+                    """
+
+                    echo "✅ Artifact packaged: ${env.ZIP_FILE_PATH}"
+                }
+            }
+        }
 
         stage('Upload to Artifactory') {
             when { expression { env.STAGES_TO_RUN.contains('upload') } }
@@ -114,7 +121,7 @@ pipeline {
     post {
         always {
             script {
-                // Send metrics to Elasticsearch
+                // Send build data to Elasticsearch
                 def jenkinsBuildData = [
                     job_name: env.JOB_NAME,
                     build_number: env.BUILD_NUMBER.toInteger(),
