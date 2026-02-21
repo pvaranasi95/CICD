@@ -8,51 +8,46 @@ pipeline {
     }
 
     stages {
-        stage('Initialize') {
+        stage('Load Build Configuration') {
             steps {
+                dir('CICD') {
+                    git branch: 'main', url: 'https://github.com/pvaranasi95/CICD.git'
+                }
+
                 script {
-                // Read the stages to run from YAML, default to all if not defined
-               stagesToRun = props.stages_to_run ?: ["checkout", "build", "test", "package", "upload"]
-               echo "Stages to run for this job: ${stagesToRun}"
-               }
+                    // Determine job name for properties
+                    def cleanJobName = env.JOB_NAME.split('/')[0].split('@')[0]
+                    echo "Job short name: ${cleanJobName}"
+                    env.CLEAN_JOB_NAME = cleanJobName
+
+                    // YAML path
+                    def yamlPath = "${env.WORKSPACE}/Properties/${cleanJobName}_Properties.yaml"
+
+                    if (!fileExists(yamlPath)) {
+                        error "❌ Config file not found: ${yamlPath}"
+                    }
+
+                    // Read properties
+                    def props = readYaml file: yamlPath
+
+                    // Set env vars
+                    env.SOURCE_REPO       = props.git_repo_url
+                    env.SOURCE_BRANCH     = props.git_branch ?: "main"
+                    env.BUILD_WORKDIR     = props.workspace ?: "release-source"
+                    env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
+                    env.ARTIFACTORY_URL   = props.artifactory_url
+                    env.ARTIFACTORY_CREDS = props.artifactory_credentials
+                    env.EMAIL_NOTIFY      = props.email_notify
+
+                    // Stages to run
+                    stagesToRun = props.stages_to_run ?: ["checkout", "build", "test", "package", "upload"]
+                    echo "Stages to run: ${stagesToRun}"
+                }
             }
         }
 
-     stage('Load Build Configuration') {
-    steps {
-       dir('CICD') {
-    git branch: 'main', url: 'https://github.com/pvaranasi95/CICD.git'
-}
-
-script {
-    sh"pwd"
-        // Take only the first segment of JOB_NAME
-    def cleanJobName = env.JOB_NAME.split('/')[0]  // 'Petclinic/main' → 'Petclinic'
-
-    // Remove any @2 suffix (if Jenkins appends it)
-    cleanJobName = cleanJobName.split('@')[0]
-     echo "${cleanJobName}"
-    def yamlPath = "${env.WORKSPACE}/Properties/${cleanJobName}_Properties.yaml"
-
-    if (!fileExists(yamlPath)) {
-        error "❌ Config file not found: ${yamlPath}"
-    }
-
-    def props = readYaml file: yamlPath
-
-    env.SOURCE_REPO       = props.git_repo_url
-    env.SOURCE_BRANCH     = props.git_branch ?: "main"
-    env.BUILD_WORKDIR     = props.workspace ?: "release-source"
-    env.ARTIFACTORY_REPO  = props.artifactory_repo ?: "default-repo"
-    env.ARTIFACTORY_URL   = props.artifactory_url
-    env.ARTIFACTORY_CREDS = props.artifactory_credentials
-    env.EMAIL_NOTIFY      = props.email_notify
-
-}
-    }
-     }
         stage('Checkout Source') {
-            when { expression { env.stages_to_run.contains('checkout') } }
+            when { expression { stagesToRun.contains('checkout') } }
             steps {
                 dir(env.BUILD_WORKDIR) {
                     checkout([$class: 'GitSCM',
@@ -65,7 +60,7 @@ script {
         }
 
         stage('Build Application') {
-            when { expression { env.stages_to_run.contains('build') } }
+            when { expression { stagesToRun.contains('build') } }
             steps {
                 dir(env.BUILD_WORKDIR) {
                     sh 'mvn clean install -DskipTests'
@@ -75,7 +70,7 @@ script {
         }
 
         stage('Run Tests') {
-            when { expression { env.stages_to_run.contains('test') } }
+            when { expression { stagesToRun.contains('test') } }
             steps {
                 dir(env.BUILD_WORKDIR) {
                     sh 'mvn test'
@@ -85,23 +80,21 @@ script {
         }
 
         stage('Package Artifact') {
-            when { expression { env.stages_to_run.contains('package') } }
+            when { expression { stagesToRun.contains('package') } }
             steps {
                 script {
-                    env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}/${env.JOB_NAME}-${env.BUILD_NUMBER}.zip"
-
+                    env.ZIP_FILE_PATH = "${env.BUILD_OUTPUT_DIR}/${env.CLEAN_JOB_NAME}-${env.BUILD_NUMBER}.zip"
                     sh """
                     mkdir -p ${env.BUILD_OUTPUT_DIR}
                     zip -r ${env.ZIP_FILE_PATH} ${env.WORKSPACE}/${env.BUILD_WORKDIR}/target/*
                     """
-
                     echo "✅ Artifact packaged: ${env.ZIP_FILE_PATH}"
                 }
             }
         }
 
         stage('Upload to Artifactory') {
-            when { expression { env.stages_to_run.contains('upload') } }
+            when { expression { stagesToRun.contains('upload') } }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: env.ARTIFACTORY_CREDS,
@@ -110,7 +103,7 @@ script {
                 )]) {
                     sh """
                     curl -u $ART_USER:$ART_PASS -T "${env.ZIP_FILE_PATH}" \
-                    "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_NUMBER}/${env.JOB_NAME}.zip"
+                    "${env.ARTIFACTORY_URL}/artifactory/${env.ARTIFACTORY_REPO}/${env.CLEAN_JOB_NAME}/${env.BUILD_NUMBER}/${env.CLEAN_JOB_NAME}.zip"
                     """
                     echo "✅ Uploaded to Artifactory"
                 }
@@ -121,9 +114,8 @@ script {
     post {
         always {
             script {
-                // Send build data to Elasticsearch
                 def jenkinsBuildData = [
-                    job_name: env.cleanJobName,
+                    job_name: env.CLEAN_JOB_NAME,
                     build_number: env.BUILD_NUMBER.toInteger(),
                     status: currentBuild.currentResult,
                     timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC')),
