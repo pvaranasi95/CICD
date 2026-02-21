@@ -5,7 +5,6 @@ pipeline {
         BUILD_OUTPUT_DIR = "${env.WORKSPACE}/Builds"
         CONFIG_REPO      = "https://github.com/pvaranasi95/CICD.git"
         CONFIG_BRANCH    = "main"
-        PROP_FILE        = "" // dynamically set
     }
 
     stages {
@@ -17,11 +16,12 @@ pipeline {
 }
 
 script {
+
+    sh "cd /var/jenkins_home/workspace/${env.JOB_NAME}/CICD/Properties"
     def jobParts = env.JOB_NAME.split('/')
     def lastPart = jobParts[-1]
     def cleanJobName = lastPart.split('@')[0]
-    env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
-    def yamlPath = "CICD/${env.PROP_FILE}"
+    def yamlPath = "${env.JOB_NAME}_Properties.yaml"
 
     if (!fileExists(yamlPath)) {
         error "❌ Config file not found: ${yamlPath}"
