@@ -48,7 +48,6 @@ script {
     env.ARTIFACTORY_CREDS = props.artifactory_credentials
     env.EMAIL_NOTIFY      = props.email_notify
 
-    echo "SOURCE_REPO = "props.git_repo_url
 }
     }
      }
