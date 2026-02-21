@@ -21,7 +21,8 @@ pipeline {
 
                 script {
                     // Set property file dynamically based on repo/job name
-                    env.PROP_FILE = "Properties/${env.JOB_NAME}_Properties.yaml"
+                    def cleanJobName = env.JOB_NAME.split('@')[0]
+                    env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
 
                     // Read YAML
                     def props = readYaml file: "CICD/${env.PROP_FILE}"
