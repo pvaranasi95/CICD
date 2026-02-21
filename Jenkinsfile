@@ -21,16 +21,19 @@ pipeline {
                 }
 
                 script {
-                    // Strip @2 suffix in workspace
-                    def cleanJobName = env.JOB_NAME.split('@')[0]
-                    echo "JOB_NAME = ${cleanJobName}"
-                    env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
+            // Remove @2, @3 suffix in workspace
+            def cleanJobName = env.JOB_NAME.split('@')[0]
+            
+            // Build property file path
+            env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
 
-                    // Safe YAML path
-                    def yamlPath = "${env.PROP_FILE}"
-                    if (!fileExists(yamlPath)) {
-                        error "❌ Config file not found: ${yamlPath}"
-                    }
+            // Full path inside cloned repo
+            def yamlPath = "CICD/${env.PROP_FILE}"
+
+            // Check that the file exists
+            if (!fileExists(yamlPath)) {
+                error "❌ Config file not found: ${yamlPath}"
+            }
 
                     def props = readYaml file: yamlPath
 
