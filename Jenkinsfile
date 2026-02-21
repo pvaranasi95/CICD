@@ -27,7 +27,7 @@ pipeline {
                     env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
 
                     // Safe YAML path
-                    def yamlPath = "CICD/${env.PROP_FILE}"
+                    def yamlPath = "${env.PROP_FILE}"
                     if (!fileExists(yamlPath)) {
                         error "❌ Config file not found: ${yamlPath}"
                     }
