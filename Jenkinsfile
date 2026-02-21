@@ -87,7 +87,7 @@ pipeline {
         }
     }
 
- post {
+post {
     always {
         script {
             def jenkinsBuildData = [
@@ -101,15 +101,13 @@ pipeline {
 
             def jsonBody = groovy.json.JsonOutput.toJson(jenkinsBuildData)
 
-            echo "Sending build data to Elasticsearch: ${jsonBody}"
+            echo "Sending build data to Elasticsearch"
 
-            node {
-                sh """
-                curl -X POST "http://host.docker.internal:9200/jenkins/_doc" \
-                     -H "Content-Type: application/json" \
-                     -d '${jsonBody}'
-                """
-            }
+            sh """
+            curl -X POST "http://host.docker.internal:9200/jenkins/_doc" \
+                 -H "Content-Type: application/json" \
+                 -d '${jsonBody}' || true
+            """
         }
     }
 }
