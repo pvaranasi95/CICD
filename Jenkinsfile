@@ -23,7 +23,7 @@ script {
     // Remove any @2 suffix (if Jenkins appends it)
     cleanJobName = cleanJobName.split('@')[0]
      echo "${cleanJobName}"
-    def yamlPath = "/var/jenkins_home/workspace/env.JOB_NAME/Properties/${cleanJobName}_Properties.yaml"
+    def yamlPath = "${env.WORKSPACE}/Properties/${cleanJobName}_Properties.yaml"
 
     if (!fileExists(yamlPath)) {
         error "❌ Config file not found: ${yamlPath}"
