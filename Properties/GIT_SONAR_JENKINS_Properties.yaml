@@ -1,0 +1,8 @@
+git_repo_url: "https://github.com/pvaranasi95/Jenkins-Sonarqube-Docker.git"
+git_branch: "main"
+artifactory_repo: "GIT_SONAR_JENKINS"
+artifactory_url: "http://host.docker.internal:8082"
+artifactory_credentials: "Jfrog_Artifactory"
+email_notify: "pavanvaranasi95@gmail.com,radha.medavarapu193@gmail.com"
+stages_to_run:
+  - checkout
