@@ -16,8 +16,8 @@ pipeline {
 }
 
 script {
-
-    def yamlPath = "CICD/Properties/env.JOB_NAME_Properties.yaml"
+     echo "${env.JOB_NAME}"
+    def yamlPath = "Properties/${env.JOB_NAME}_Properties.yaml"
 
     if (!fileExists(yamlPath)) {
         error "❌ Config file not found: ${yamlPath}"
