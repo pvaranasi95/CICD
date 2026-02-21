@@ -23,7 +23,7 @@ pipeline {
             def lastPart = jobParts[-1]          // last folder or job name
             def cleanJobName = lastPart.split('@')[0]  // remove @2, @3 suffix
 
-            env.PROP_FILE = "Properties/${cleanJobName}_Properties.yaml"
+            env.PROP_FILE = "Properties/Petclinic_Properties.yaml"
 
             // Full path to YAML inside CICD repo
             def yamlPath = "CICD/${env.PROP_FILE}"
