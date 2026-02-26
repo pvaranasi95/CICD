@@ -124,7 +124,7 @@ pipeline {
         stage('clean workspace') {
             steps {
                 sh '''echo "${env.WORKSPACE}"
-                      rm -rf ."
+                      rm -rf .'''
                     
     }
 
