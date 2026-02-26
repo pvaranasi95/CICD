@@ -182,7 +182,7 @@ ${env.BUILD_URL}
                     site: "Jira",
                     issue: [
                         fields: [
-                            project: [ key: "JENKINS" ],
+                            project: [ key: "JIRA" ],
                             summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                             description: """Jenkins Job Failed
 
