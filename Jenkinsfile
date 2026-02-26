@@ -5,6 +5,7 @@ pipeline {
         BUILD_OUTPUT_DIR = "${env.WORKSPACE}/Builds"
         CONFIG_REPO      = "https://github.com/pvaranasi95/CICD.git"
         CONFIG_BRANCH    = "main"
+        JIRA_SITE = 'https://pavanvaranasi95.atlassian.net/'
     }
 
     stages {
@@ -62,7 +63,7 @@ pipeline {
             when { expression { stagesToRun.contains('checkout') } }
             steps {
                 dir(env.BUILD_WORKDIR) {
-                    checkout([$class: 'GitSCM',
+                    checkout([$class: 'GitSCM'
                         branches: [[name: "*/${env.SOURCE_BRANCH}"]],
                         userRemoteConfigs: [[url: env.SOURCE_REPO]]
                     ])
@@ -174,5 +175,26 @@ ${env.BUILD_URL}
             )
         }
     }
+    failure {
+            script {
+                // Create Jira issue
+                def issue = jiraNewIssue(
+                    site: "${JIRA_SITE}",
+                    projectKey: 'Jenkins',        // Your Jira project key
+                    summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    description: """
+                    Jenkins Job Failed
+
+                    Job: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+                    URL: ${env.BUILD_URL}
+                    """,
+                    issuetype: 'Bug'     
+                )
+                 jiraAttachFile(issueKey: issue.key, file: "${env.WORKSPACE}/build.log")
+
+                echo "Created Jira issue: ${issue.key}"
+            }
+        }
 }
 }
