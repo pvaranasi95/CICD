@@ -177,30 +177,37 @@ ${env.BUILD_URL}
     }
 failure {
     script {
-        def response = jiraNewIssue(
-            site: "Jira",
-            issue: [
-                fields: [
-                    project: [ key: "JIRA" ],
-                    summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    description: """
-                    Jenkins Job Failed
+        try {
+            // Create Jira issue
+            def response = jiraNewIssue(
+                site: "Jira",
+                issue: [
+                    fields: [
+                        project: [ key: "JIRA" ],
+                        summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        description: """
+                        Jenkins Job Failed
 
-                    Job: ${env.JOB_NAME}
-                    Build Number: ${env.BUILD_NUMBER}
-                    URL: ${env.BUILD_URL}
-                    """,
-                    issuetype: [ name: "Task" ]
+                        Job: ${env.JOB_NAME}
+                        Build Number: ${env.BUILD_NUMBER}
+                        URL: ${env.BUILD_URL}
+                        """,
+                        issuetype: [ name: "Task" ]
+                    ]
                 ]
-            ]
-        )
+            )
 
-        if (response?.status == 201) {
-            echo "Created Jira issue: ${response.data.key}"  // ✅ Correct
-            // Attach build log
-            jiraAttachFile(issueKey: response.data.key, file: "${env.WORKSPACE}/build.log")
-        } else {
-            echo "Jira creation failed: ${response}"
+            // Safely echo Jira key
+            if(response?.data) {
+                echo "Created Jira issue: ${response.data['key']}"
+                // Attach build log
+                jiraAttachFile(issueKey: response.data['key'], file: "${env.WORKSPACE}/build.log")
+            } else {
+                echo "Jira issue creation succeeded but no key returned"
+            }
+
+        } catch(Exception e) {
+            echo "Jira creation failed: ${e}"
         }
     }
 }
