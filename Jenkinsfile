@@ -164,7 +164,6 @@ Check details here:
 ${env.BUILD_URL}
 """,
                 to: "${env.EMAIL_NOTIFY}",
-                from: "pavanvaranasi95@gmail.com"
             )
         }
     }
