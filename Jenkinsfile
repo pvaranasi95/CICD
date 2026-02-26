@@ -176,23 +176,30 @@ ${env.BUILD_URL}
             )
         }
     }
- failure {
+failure {
         script {
-            def newIssue = jiraIssue(
-                site: "${JIRA_SITE}",
-                projectKey: "JEN",
-                summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                description: """
-Jenkins Job Failed
+            def issueKey = null
 
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
-URL: ${env.BUILD_URL}
-""",
-                type: "Task"
-            )
+            try {
+                def issue = jiraNewIssue(
+                    site: "${JIRA_SITE}",
+                    projectKey: 'JEN',
+                    summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    description: "Build failed",
+                    issuetype: 'Task'
+                )
 
-            echo "Created Jira issue: ${issue.key}"
+                issueKey = issue?.key
+            }
+            catch (err) {
+                echo "Jira creation failed: ${err}"
+            }
+
+            if (issueKey) {
+                echo "Created Jira issue: ${issueKey}"
+            } else {
+                echo "Jira issue was not created"
+            }
         }
     }
    }
