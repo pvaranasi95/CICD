@@ -177,25 +177,23 @@ ${env.BUILD_URL}
         }
     }
  failure {
-            script {
-                // Create Jira issue
-                def issue = jiraNewIssue(
-                    site: "${JIRA_SITE}",
-                    projectKey: 'JEN',        // Your Jira project key
-                    summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    description: """
-                    Jenkins Job Failed
+        script {
+            def newIssue = jiraIssue(
+                site: "${JIRA_SITE}",
+                projectKey: "JEN",
+                summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                description: """
+Jenkins Job Failed
 
-                    Job: ${env.JOB_NAME}
-                    Build Number: ${env.BUILD_NUMBER}
-                    URL: ${env.BUILD_URL}
-                    """,
-                    issuetype: 'Task'     
-                )
-                 jiraAttachFile(issueKey: issue.key, file: "${env.WORKSPACE}/build.log")
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+URL: ${env.BUILD_URL}
+""",
+                type: "Task"
+            )
 
-                echo "Created Jira issue: ${issue.key}"
-            }
-       }
+            echo "Created Jira issue"
+        }
+    }
    }
 }
