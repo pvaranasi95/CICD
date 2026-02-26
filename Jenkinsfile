@@ -133,5 +133,20 @@ pipeline {
                 """
             }
         }
+        always{
+            emailext subject: "Build ${BUILD_STATUS} for: ${JOB_NAME} #${BUILD_NUMBER}",
+    body: """Hi,
+
+Your Jenkins build status is: ${BUILD_STATUS}
+
+Job: ${JOB_NAME}
+Build Number: ${BUILD_NUMBER}
+
+Check details here:
+${BUILD_URL}
+""",
+                to: "${env.EMAIL_NOTIFY},
+                from: "pavanvaranasi95@gmail.com"
+       }
     }
 }
