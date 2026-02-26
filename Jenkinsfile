@@ -125,7 +125,8 @@ pipeline {
             steps {
                 sh '''echo "${env.WORKSPACE}"
                       rm -rf .'''
-                    
+            }
+        }        
     }
 
 post {
