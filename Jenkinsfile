@@ -5,7 +5,6 @@ pipeline {
         BUILD_OUTPUT_DIR = "${env.WORKSPACE}/Builds"
         CONFIG_REPO      = "https://github.com/pvaranasi95/CICD.git"
         CONFIG_BRANCH    = "main"
-        JIRA_SITE = 'https://pavanvaranasi95.atlassian.net/'
     }
 
     stages {
@@ -176,29 +175,30 @@ ${env.BUILD_URL}
             )
         }
     }
-failure {
+   failure {
         script {
-            def issueKey = null
-
             try {
                 def issue = jiraNewIssue(
-                    site: "${JIRA_SITE}",
-                    projectKey: 'JEN',
-                    summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    description: "Build failed",
-                    issuetype: 'Task'
+                    site: "Jira",
+                    issue: [
+                        fields: [
+                            project: [ key: "JEN" ],
+                            summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                            description: """Jenkins Job Failed
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+URL: ${env.BUILD_URL}
+""",
+                            issuetype: [ name: "Task" ]
+                        ]
+                    ]
                 )
 
-                issueKey = issue?.key
-            }
-            catch (err) {
-                echo "Jira creation failed: ${err}"
-            }
+                echo "Created Jira issue: ${issue.key}"
 
-            if (issueKey) {
-                echo "Created Jira issue: ${issueKey}"
-            } else {
-                echo "Jira issue was not created"
+            } catch (err) {
+                echo "Jira creation failed: ${err}"
             }
         }
     }
