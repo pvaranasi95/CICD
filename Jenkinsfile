@@ -63,7 +63,7 @@ pipeline {
             when { expression { stagesToRun.contains('checkout') } }
             steps {
                 dir(env.BUILD_WORKDIR) {
-                    checkout([$class: 'GitSCM'
+                    checkout([$class: 'GitSCM',
                         branches: [[name: "*/${env.SOURCE_BRANCH}"]],
                         userRemoteConfigs: [[url: env.SOURCE_REPO]]
                     ])
@@ -125,6 +125,7 @@ pipeline {
         stage('clean workspace') {
             steps {
                 cleanWs()
+                sh "rm -rf ."
                 echo "Workspace cleaning done"
                 sh "ls -ltr"
             }
