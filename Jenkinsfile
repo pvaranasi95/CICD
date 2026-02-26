@@ -182,7 +182,7 @@ ${env.BUILD_URL}
             def payload = """
 {
   "fields": {
-    "project": { "key": "Jenkins" },
+    "project": { "key": "JEN" },
     "summary": "Build Failed: ${JOB_NAME} #${BUILD_NUMBER}",
     "description": "Jenkins build failed. URL: ${BUILD_URL}",
     "issuetype": { "name": "Bug" }
