@@ -176,29 +176,26 @@ ${env.BUILD_URL}
             )
         }
     }
-   failure {
-        script {
-            // Prepare Jira issue JSON
-            def payload = """
-{
-  "fields": {
-    "project": { "key": "JEN" },
-    "summary": "Build Failed: ${JOB_NAME} #${BUILD_NUMBER}",
-    "description": "Jenkins build failed. URL: ${BUILD_URL}",
-    "issuetype": { "name": "Bug" }
-  }
-}
-"""
-            writeFile file: 'jira_issue.json', text: payload
+ failure {
+            script {
+                // Create Jira issue
+                def issue = jiraNewIssue(
+                    site: "${JIRA_SITE}",
+                    projectKey: 'JEN',        // Your Jira project key
+                    summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    description: """
+                    Jenkins Job Failed
 
-            // Send to Jira Cloud using email + API token
-            sh """
-curl -u your-email@example.com:API_TOKEN -X POST \
-  -H "Content-Type: application/json" \
-  --data @jira_issue.json \
-  https://pavanvaranasi95.atlassian.net/rest/api/2/issue/
-"""
-        }
-    }
-}
+                    Job: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+                    URL: ${env.BUILD_URL}
+                    """,
+                    issuetype: 'Task'     
+                )
+                 jiraAttachFile(issueKey: issue.key, file: "${env.WORKSPACE}/build.log")
+
+                echo "Created Jira issue: ${issue.key}"
+            }
+       }
+   }
 }
