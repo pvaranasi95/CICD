@@ -175,32 +175,34 @@ ${env.BUILD_URL}
             )
         }
     }
-   failure {
-        script {
-            try {
-                def issue = jiraNewIssue(
-                    site: "Jira",
-                    issue: [
-                        fields: [
-                            project: [ key: "JIRA" ],
-                            summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                            description: """Jenkins Job Failed
+failure {
+    script {
+        def response = jiraNewIssue(
+            site: "Jira",
+            issue: [
+                fields: [
+                    project: [ key: "JIRA" ],
+                    summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    description: """
+                    Jenkins Job Failed
 
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
-URL: ${env.BUILD_URL}
-""",
-                            issuetype: [ name: "Task" ]
-                        ]
-                    ]
-                )
+                    Job: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+                    URL: ${env.BUILD_URL}
+                    """,
+                    issuetype: [ name: "Task" ]
+                ]
+            ]
+        )
 
-                echo "Created Jira issue: ${issue.key}"
-
-            } catch (err) {
-                echo "Jira creation failed: ${err}"
-            }
+        if (response?.status == 201) {
+            echo "Created Jira issue: ${response.data.key}"  // ✅ Correct
+            // Attach build log
+            jiraAttachFile(issueKey: response.data.key, file: "${env.WORKSPACE}/build.log")
+        } else {
+            echo "Jira creation failed: ${response}"
         }
     }
+}
    }
 }
