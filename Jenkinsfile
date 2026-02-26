@@ -198,10 +198,21 @@ failure {
             )
 
             // Safely echo Jira key
-            if(response?.data) {
-                echo "Created Jira issue: ${response.data['key']}"
+            if(response?.data?.key) {
+                def issueKey = response.data['key']
+                echo "Created Jira issue: ${issueKey}"
+
                 // Attach build log
-                jiraAttachFile(issueKey: response.data['key'], file: "${env.WORKSPACE}/build.log")
+                if(fileExists("${env.WORKSPACE}/build.log")) {
+                    jiraUploadAttachment(
+                        site: "Jira",
+                        issueKey: issueKey,
+                        file: "${env.WORKSPACE}/build.log"
+                    )
+                    echo "Attached build.log to ${issueKey}"
+                } else {
+                    echo "No build.log found to attach"
+                }
             } else {
                 echo "Jira issue creation succeeded but no key returned"
             }
