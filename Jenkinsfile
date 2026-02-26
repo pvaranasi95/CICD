@@ -42,7 +42,18 @@ pipeline {
 
                     // Stages to run
                     stagesToRun = props.stages_to_run ?: ["checkout", "build", "test", "package", "upload"]
-                    echo "Stages to run: ${stagesToRun}"
+
+                    echo "SOURCE_REPO     : ${env.SOURCE_REPO}"
+                    echo " "
+                    echo "SOURCE_BRANCH   : ${env.SOURCE_BRANCH}"
+                    echo " "
+                    echo "ARTIFACTORY_REPO: ${env.ARTIFACTORY_REPO}"
+                    echo " "
+                    echo "ARTIFACTORY_URL : ${env.ARTIFACTORY_URL}"
+                    echo " "
+                    echo "EMAIL_NOTIFY    : ${env.EMAIL_NOTIFY}"
+                    echo " "
+                    echo "Stages to run   : ${stagesToRun}"
                 }
             }
         }
@@ -145,7 +156,7 @@ Build Number: ${BUILD_NUMBER}
 Check details here:
 ${BUILD_URL}
 """,
-                to: "${env.EMAIL_NOTIFY},
+                to: "${env.EMAIL_NOTIFY}",
                 from: "pavanvaranasi95@gmail.com"
        }
     }
