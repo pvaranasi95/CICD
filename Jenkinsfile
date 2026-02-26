@@ -192,7 +192,7 @@ URL: ${env.BUILD_URL}
                 type: "Task"
             )
 
-            echo "Created Jira issue"
+            echo "Created Jira issue: ${issue.key}"
         }
     }
    }
