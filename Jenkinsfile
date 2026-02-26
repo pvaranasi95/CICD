@@ -123,8 +123,9 @@ pipeline {
         }
         stage('clean workspace') {
             steps {
-                sh '''echo "${env.WORKSPACE}"
-                      rm -rf .'''
+                sh "rm -rf ."
+                echo "Workspace cleaning done"
+                sh "ls -ltr"
             }
         }        
     }
