@@ -132,10 +132,9 @@ pipeline {
     }
 
 post {
-    failure {
+failure {
     script {
         try {
-            // Create Jira issue
             def response = jiraNewIssue(
                 site: "Jira",
                 issue: [
@@ -143,23 +142,23 @@ post {
                         project: [ key: "JIRA" ],
                         summary: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                         description: """
-                        Jenkins Job Failed
+Jenkins Job Failed
 
-                        Job: ${env.JOB_NAME}
-                        Build Number: ${env.BUILD_NUMBER}
-                        URL: ${env.BUILD_URL}
-                        """,
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+URL: ${env.BUILD_URL}
+""",
                         issuetype: [ name: "Task" ]
                     ]
                 ]
             )
 
-            // Safely echo Jira key
             if(response?.data?.key) {
-                def issueKey = response.data['key']
+                env.issueKey = response.data.key
+                def issueKey = env.issueKey
+
                 echo "Created Jira issue: ${issueKey}"
 
-                // Attach build log
                 if(fileExists("${env.WORKSPACE}/build.log")) {
                     jiraUploadAttachment(
                         site: "Jira",
@@ -167,11 +166,7 @@ post {
                         file: "${env.WORKSPACE}/build.log"
                     )
                     echo "Attached build.log to ${issueKey}"
-                } else {
-                    echo "No build.log found to attach"
                 }
-            } else {
-                echo "Jira issue creation succeeded but no key returned"
             }
 
         } catch(Exception e) {
@@ -183,18 +178,18 @@ post {
         script {
 
             // Prepare JSON for Elasticsearch
-            def jenkinsBuildData = [
-                job_name    : env.CLEAN_JOB_NAME ?: env.JOB_NAME,
-                build_number: env.BUILD_NUMBER.toInteger(),
-                status      : currentBuild.currentResult,
-                timestamp   : new Date().format(
-                                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                                TimeZone.getTimeZone('UTC')
-                              ),
-                duration    : currentBuild.duration,
-                url         : env.BUILD_URL
-                jira_key    : ${issueKey}
-            ]
+           def jenkinsBuildData = [
+    job_name    : env.CLEAN_JOB_NAME ?: env.JOB_NAME,
+    build_number: env.BUILD_NUMBER.toInteger(),
+    status      : currentBuild.currentResult,
+    timestamp   : new Date().format(
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                    TimeZone.getTimeZone('UTC')
+                  ),
+    duration    : currentBuild.duration,
+    url         : env.BUILD_URL,
+    jira_key    : env.issueKey ?: ""
+]
 
             def jsonBody = groovy.json.JsonOutput.toJson(jenkinsBuildData)
 
