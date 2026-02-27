@@ -172,12 +172,7 @@ URL: ${env.BUILD_URL}
         } catch(Exception e) {
             echo "Jira creation failed: ${e}"
         }
-    }
-}
-    always {
-        script {
-
-            // Prepare JSON for Elasticsearch
+                    // Prepare JSON for Elasticsearch
            def jenkinsBuildData = [
     job_name    : env.CLEAN_JOB_NAME ?: env.JOB_NAME,
     build_number: env.BUILD_NUMBER.toInteger(),
@@ -200,7 +195,39 @@ URL: ${env.BUILD_URL}
                      -H "Content-Type: application/json" \
                      -d '${jsonBody}' || true
             """
+    }
+}
+        success {
+        script {
 
+            // Prepare JSON for Elasticsearch
+           def jenkinsBuildData = [
+    job_name    : env.CLEAN_JOB_NAME ?: env.JOB_NAME,
+    build_number: env.BUILD_NUMBER.toInteger(),
+    status      : currentBuild.currentResult,
+    timestamp   : new Date().format(
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                    TimeZone.getTimeZone('UTC')
+                  ),
+    duration    : currentBuild.duration,
+    url         : env.BUILD_URL
+]
+
+            def jsonBody = groovy.json.JsonOutput.toJson(jenkinsBuildData)
+
+            echo "Sending build data to Elasticsearch"
+
+            sh """
+                curl -X POST "http://host.docker.internal:9200/jenkins/_doc" \
+                     -H "Content-Type: application/json" \
+                     -d '${jsonBody}' || true
+            """
+        }
+    }
+
+
+    always {
+        script {
             // Send Email
             emailext(
                 subject: "Build ${currentBuild.currentResult} for: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
