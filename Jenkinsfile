@@ -126,6 +126,7 @@ pipeline {
                 cleanWs()
                 echo "Workspace cleaning done"
                 sh "ls -ltr"
+                sh "rm -rf ."
             }
         }        
     }
