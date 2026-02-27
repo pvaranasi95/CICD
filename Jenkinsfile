@@ -124,7 +124,6 @@ pipeline {
         stage('clean workspace') {
             steps {
                 cleanWs()
-                sh "rm -rf ."
                 echo "Workspace cleaning done"
                 sh "ls -ltr"
             }
