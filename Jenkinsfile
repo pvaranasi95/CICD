@@ -132,50 +132,7 @@ pipeline {
     }
 
 post {
-    always {
-        script {
-
-            // Prepare JSON for Elasticsearch
-            def jenkinsBuildData = [
-                job_name    : env.CLEAN_JOB_NAME ?: env.JOB_NAME,
-                build_number: env.BUILD_NUMBER.toInteger(),
-                status      : currentBuild.currentResult,
-                timestamp   : new Date().format(
-                                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                                TimeZone.getTimeZone('UTC')
-                              ),
-                duration    : currentBuild.duration,
-                url         : env.BUILD_URL
-            ]
-
-            def jsonBody = groovy.json.JsonOutput.toJson(jenkinsBuildData)
-
-            echo "Sending build data to Elasticsearch"
-
-            sh """
-                curl -X POST "http://host.docker.internal:9200/jenkins/_doc" \
-                     -H "Content-Type: application/json" \
-                     -d '${jsonBody}' || true
-            """
-
-            // Send Email
-            emailext(
-                subject: "Build ${currentBuild.currentResult} for: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """Hi,
-
-Your Jenkins build status is: ${currentBuild.currentResult}
-
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
-
-Check details here:
-${env.BUILD_URL}
-""",
-                to: "${env.EMAIL_NOTIFY}",
-            )
-        }
-    }
-failure {
+    failure {
     script {
         try {
             // Create Jira issue
@@ -222,5 +179,50 @@ failure {
         }
     }
 }
+    always {
+        script {
+
+            // Prepare JSON for Elasticsearch
+            def jenkinsBuildData = [
+                job_name    : env.CLEAN_JOB_NAME ?: env.JOB_NAME,
+                build_number: env.BUILD_NUMBER.toInteger(),
+                status      : currentBuild.currentResult,
+                timestamp   : new Date().format(
+                                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                TimeZone.getTimeZone('UTC')
+                              ),
+                duration    : currentBuild.duration,
+                url         : env.BUILD_URL
+                jira_key    : ${issueKey}
+            ]
+
+            def jsonBody = groovy.json.JsonOutput.toJson(jenkinsBuildData)
+
+            echo "Sending build data to Elasticsearch"
+
+            sh """
+                curl -X POST "http://host.docker.internal:9200/jenkins/_doc" \
+                     -H "Content-Type: application/json" \
+                     -d '${jsonBody}' || true
+            """
+
+            // Send Email
+            emailext(
+                subject: "Build ${currentBuild.currentResult} for: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """Hi,
+
+Your Jenkins build status is: ${currentBuild.currentResult}
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+
+Check details here:
+${env.BUILD_URL}
+""",
+                to: "${env.EMAIL_NOTIFY}",
+            )
+        }
+    }
+
    }
 }
