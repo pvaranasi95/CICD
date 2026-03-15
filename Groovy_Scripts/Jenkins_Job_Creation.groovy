@@ -43,7 +43,7 @@ pipeline {
                         xmlFile = 'organization.xml'
                     }
                             
-                sh "curl -x POST -u pvaranasi95:11f5916d329915b0f7e7df158d546c5eff -H "Content-Type: application/xml" --data-binary @Pipeline_Creation_XML/${xmlFile} http://localhost:8080/createItem?name=${params.Job_Name}"
+                sh '''curl -x POST -u pvaranasi95:11f5916d329915b0f7e7df158d546c5eff -H "Content-Type: application/xml" --data-binary @Pipeline_Creation_XML/${xmlFile} http://localhost:8080/createItem?name=${params.Job_Name}'''
               }
             }
       }
