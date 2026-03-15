@@ -14,16 +14,16 @@ pipeline {
             }
         }
 
-        stage('Jenkins_cli.jar Download') {
-            steps {
-                script {
-                    // Ensure local path exists
-                    sh "curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
-                    echo "jenkins-cli.jar downloaded"
+        // stage('Jenkins_cli.jar Download') {
+        //     steps {
+        //         script {
+        //             // Ensure local path exists
+        //             sh "curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
+        //             echo "jenkins-cli.jar downloaded"
 
-                }
-            }
-        }
+        //         }
+        //     }
+        // }
       stage("Jenkins_Job_Creation") {
             steps {
               script {
@@ -43,7 +43,7 @@ pipeline {
                         xmlFile = 'organization.xml'
                     }
                             
-                sh "java -jar jenkins-cli.jar -auth pvaranasi95:11f5916d329915b0f7e7df158d546c5eff -s http://localhost:8080/ -webSocket create-job ${params.Job_Name} < Pipeline_Creation_XML/${xmlFile}"
+                sh "curl -x POST -u pvaranasi95:11f5916d329915b0f7e7df158d546c5eff -H "Content-Type: application/xml" --data-binary @Pipeline_Creation_XML/${xmlFile} http://localhost:8080/createItem?name=${params.Job_Name}"
               }
             }
       }
