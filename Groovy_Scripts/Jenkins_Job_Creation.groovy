@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     // Ensure local path exists
-                    sh "cd ${env.WORKSPACE}/CICD/Pipeline_Creation_XML"
+                    sh "cd Pipeline_Creation_XML"
                     sh "curl -O http://localhost:32768/jnlpJars/jenkins-cli.jar"
 
                 }
