@@ -28,7 +28,7 @@ pipeline {
             steps {
               script {
                             
-               sh """java -jar jenkins-cli.jar -noWebSocket -auth pvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:32768/ create-job ${params.Job_Name} --file Pipeline_Creation_XML//${params.Type}.xml"""
+               sh """java -jar jenkins-cli.jar -noWebSocket -auth pvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:32768/ create-job ${params.Job_Name} < Pipeline_Creation_XML/${params.Type}.xml"""
               }
             }
       }
