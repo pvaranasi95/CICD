@@ -19,7 +19,8 @@ pipeline {
                 script {
                     // Ensure local path exists
                     sh "pwd"
-                    sh "cd Pipeline_Creation_XML"
+                    sh "cd ${env.WORKSPACE}/Pipeline_Creation_XML"
+                    sh "pwd"
                     sh "curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
                     echo "jenkins-cli.jar downloaded"
 
