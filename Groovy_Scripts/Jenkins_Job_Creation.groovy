@@ -27,8 +27,8 @@ pipeline {
       stage("Jenkins_Job_Creation") {
             steps {
               script {
-                            
-               sh """java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-job ../${params.Job_Name} < Pipeline_Creation_XML/${params.Type}.xml"""
+                sh "cd .."         
+               sh """java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-job ${params.Job_Name} < Jenkinsjob_Creation/Pipeline_Creation_XML/${params.Type}.xml"""
               }
             }
       }
