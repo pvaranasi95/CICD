@@ -18,8 +18,10 @@ pipeline {
             steps {
                 script {
                     // Ensure local path exists
+                    sh "pwd"
                     sh "cd Pipeline_Creation_XML"
                     sh "curl -O http://localhost:32768/jnlpJars/jenkins-cli.jar"
+                    echo "jenkins-cli.jar downloaded"
 
                 }
             }
@@ -47,5 +49,12 @@ pipeline {
               }
             }
       }
+         stage('clean workspace') {
+            steps {
+                cleanWs()
+                echo "Workspace cleaning done"
+            }
+        }        
+                
     }
 }
