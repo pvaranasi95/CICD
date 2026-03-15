@@ -30,7 +30,7 @@ pipeline {
             steps {
               script {
                             
-               bat """java -jar jenkins-cli.jar -auth pvaranasi95:11f5916d329915b0f7e7df158d546c5eff -s http://localhost:8080/ create-job ${params.Job_Name} --file Pipeline_Creation_XML//${params.Type}.xml"""
+               bat """java -jar jenkins-cli.jar -auth pvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-job ${params.Job_Name} --file Pipeline_Creation_XML//${params.Type}.xml"""
               }
             }
       }
