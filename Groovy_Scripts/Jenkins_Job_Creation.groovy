@@ -43,7 +43,7 @@ pipeline {
                         xmlFile = 'organization.xml'
                     }
                             
-                sh "java -jar jenkins-cli.jar -auth pvaranasi95:Pvaranasi95 -s http://localhost:8080/ create-job ${params.Job_Name} < Pipeline_Creation_XML/${xmlFile}"
+                sh "java -jar jenkins-cli.jar -auth pvaranasi95:11f5916d329915b0f7e7df158d546c5eff -s http://localhost:8080/ create-job ${params.Job_Name} < Pipeline_Creation_XML/${xmlFile}"
               }
             }
       }
