@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'Windows_Agent'
-    }
+    agent any
     stages {
         stage('Git checkout') {
             steps {
@@ -20,7 +18,7 @@ pipeline {
             steps {
                 script {
                     // Ensure local path exists
-                    bat "curl.exe -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
+                    sh "curl.exe -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
                     echo "jenkins-cli.jar downloaded"
 
                 }
@@ -30,7 +28,7 @@ pipeline {
             steps {
               script {
                             
-               bat """java -jar jenkins-cli.jar -noWebSocket -auth pvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:32768/ create-job ${params.Job_Name} --file Pipeline_Creation_XML//${params.Type}.xml"""
+               sh """java -jar jenkins-cli.jar -noWebSocket -auth pvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:32768/ create-job ${params.Job_Name} --file Pipeline_Creation_XML//${params.Type}.xml"""
               }
             }
       }
