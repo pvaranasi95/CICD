@@ -20,7 +20,7 @@ pipeline {
                     // Ensure local path exists
                     sh "pwd"
                     sh "cd Pipeline_Creation_XML"
-                    sh "curl -O http://localhost:32768/jnlpJars/jenkins-cli.jar"
+                    sh "curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
                     echo "jenkins-cli.jar downloaded"
 
                 }
