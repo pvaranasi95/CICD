@@ -18,9 +18,6 @@ pipeline {
             steps {
                 script {
                     // Ensure local path exists
-                    sh "pwd"
-                    sh "cd ${env.WORKSPACE}/Pipeline_Creation_XML"
-                    sh "pwd"
                     sh "curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
                     echo "jenkins-cli.jar downloaded"
 
@@ -46,7 +43,7 @@ pipeline {
                         xmlFile = 'organization.xml'
                     }
                             
-                sh "java -jar jenkins-cli.jar -s http://localhost:32768/create-job ${params.Job_Name} < ${xmlFile}"
+                sh "java -jar jenkins-cli.jar -s http://localhost:32768/create-job ${params.Job_Name} < Pipeline_Creation_XML/${xmlFile}"
               }
             }
       }
