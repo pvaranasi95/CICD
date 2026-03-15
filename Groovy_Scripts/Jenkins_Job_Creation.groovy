@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     // Ensure local path exists
-                    sh "curl.exe -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
+                    sh "curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar"
                     echo "jenkins-cli.jar downloaded"
 
                 }
