@@ -56,12 +56,12 @@ pipeline {
             }
         }
                 
-         stage('clean workspace') {
-            steps {
-                cleanWs()
-                echo "Workspace cleaning done"
-            }
-        }        
+        //  stage('clean workspace') {
+        //     steps {
+        //         cleanWs()
+        //         echo "Workspace cleaning done"
+        //     }
+        // }        
                 
     }
 }
