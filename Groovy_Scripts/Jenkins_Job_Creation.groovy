@@ -28,10 +28,32 @@ pipeline {
             steps {
               script {
                 sh "cd .."         
-               sh """java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-job ${params.Job_Name} < Pipeline_Creation_XML/${params.Type}.xml"""
+               sh """java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-job ${params.Job_Name} < pipeline.xml"""
               }
             }
       }
+    stage("Add Jobs to View") {
+        steps {
+            script {
+
+                sh """
+                    CHECK_VIEW=$(java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ list-views | grep -w ${params.APP_CODE})
+                    if [ "$CHECK_VIEW" == "${params.APP_CODE}" ]; then
+                         echo "View already exists. Adding new job to ${params.APP_CODE} view."
+                          
+                    else
+                        echo "View not exists. Creating new view"
+                        java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-view < Pipeline_Creation_XML/view.xml
+                    fi   
+
+
+                echo "Adding Job To View"
+                java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ add-job-to-view ${params.APP_CODE} ${params.Job_Name}
+                """
+                }
+            }
+        }
+                
          stage('clean workspace') {
             steps {
                 cleanWs()
