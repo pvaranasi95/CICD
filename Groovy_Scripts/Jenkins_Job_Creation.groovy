@@ -37,7 +37,8 @@ pipeline {
             script {
 
                 sh '''
-                    CHECK_VIEW=$(java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ get-view ${params.APP_CODE})
+                    // CHECK_VIEW=$(java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ get-view ${params.APP_CODE})
+                    java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ get-view ${params.APP_CODE}
                     '''
                 //     if [ "$CHECK_VIEW" == "${params.APP_CODE}" ]; then
                 //          echo "View already exists. Adding new job to ${params.APP_CODE} view."
