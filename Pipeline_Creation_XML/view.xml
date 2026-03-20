@@ -1,5 +1,5 @@
 <listView>
-  <name>TEST</name>
+  <name>${params.APP_CODE}</name>
   <filterExecutors>false</filterExecutors>
   <filterQueue>false</filterQueue>
   <properties class="hudson.model.View$PropertyList"/>
