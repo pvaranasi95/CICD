@@ -40,10 +40,12 @@ stage("Add Jobs to View") {
             def job = params.Job_Name
 
             sh """
-                java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ get-view ${app} > ${app}.txt
+                java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ get-view ${app} > ${app}.txt 2>&1
 
-                if [ -f "${app}.txt" ]; then
-                     echo "View already exists. Adding new job to ${app} view."
+                WC=\$(wc -w < ${app}.txt)
+
+                if [ "\$WC" -gt 0 ]; then
+                     echo "View may exist. Adding new job to ${app} view."
                 else
                     echo "View not exists. Creating new view"
                     java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-view ${app} < Pipeline_Creation_XML/view.xml
