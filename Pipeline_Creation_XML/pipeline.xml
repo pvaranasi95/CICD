@@ -27,7 +27,7 @@
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
-          <url>https://github.com/pvaranasi95/Petclinic.git</url>
+          <url>${params.GIT_URL}</url>
           <credentialsId>GitHub</credentialsId>
         </hudson.plugins.git.UserRemoteConfig>
       </userRemoteConfigs>
