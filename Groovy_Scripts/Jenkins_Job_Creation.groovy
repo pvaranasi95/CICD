@@ -38,9 +38,9 @@ stage("Add Jobs to View") {
 
             def app = params.APP_CODE
             def job = params.Job_Name
-
+            def app_status = params.APP_CODE_STATUS
             sh """  
-                if [ ${param.APP_CODE_STATUS} == "NEW" ]; then
+                if [ ${app_status} == "NEW" ]; then
                    java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-view ${app} < Pipeline_Creation_XML/view.xml
                    echo "${app} view created."
                    java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ add-job-to-view ${app} ${job}
