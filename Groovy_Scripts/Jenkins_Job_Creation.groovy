@@ -46,8 +46,9 @@ stage("Add Jobs to View") {
                    java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ add-job-to-view ${app} ${job}
                    echo "${job} added to ${app} view"
                 else
-                echo "Adding Job To Existing View"
-                java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ add-job-to-view ${app} ${job}
+                   echo "Adding Job To Existing View"
+                   java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ add-job-to-view ${app} ${job}
+                fi
             """
         }
     }
