@@ -27,7 +27,7 @@
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
-          <url>${params.GIT_URL}</url>
+          <url>GIT_URL_PLACEHOLDER</url>
           <credentialsId>GitHub</credentialsId>
         </hudson.plugins.git.UserRemoteConfig>
       </userRemoteConfigs>
