@@ -32,35 +32,36 @@ pipeline {
               }
             }
       }
-    stage("Add Jobs to View") {
-        steps {
-            script {
+stage("Add Jobs to View") {
+    steps {
+        script {
 
-                sh '''
-                    java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ get-view ${params.APP_CODE} > ${params.APP_CODE}.txt
+            def app = params.APP_CODE
+            def job = params.Job_Name
 
-                    if [ -f "${params.APP_CODE}.txt" ]; then
-                         echo "View already exists. Adding new job to ${params.APP_CODE} view."
-      
-                    else
-                        echo "View not exists. Creating new view"
-                        java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-view < Pipeline_Creation_XML/view.xml
-                    fi   
+            sh """
+                java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ get-view ${app} > ${app}.txt
 
+                if [ -f "${app}.txt" ]; then
+                     echo "View already exists. Adding new job to ${app} view."
+                else
+                    echo "View not exists. Creating new view"
+                    java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ create-view ${app} < Pipeline_Creation_XML/view.xml
+                fi   
 
                 echo "Adding Job To View"
-                java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ add-job-to-view ${params.APP_CODE} ${params.Job_Name}
-                '''
-                }
-            }
+                java -jar jenkins-cli.jar -http -auth pavanvaranasi95:11fa7390e7a1b0114123e7034528793f9f -s http://localhost:8080/ add-job-to-view ${app} ${job}
+            """
         }
+    }
+}
                 
-        //  stage('clean workspace') {
-        //     steps {
-        //         cleanWs()
-        //         echo "Workspace cleaning done"
-        //     }
-        // }        
+         stage('clean workspace') {
+            steps {
+                cleanWs()
+                echo "Workspace cleaning done"
+            }
+        }        
                 
     }
 }
