@@ -1,16 +1,7 @@
 pipeline {
-    agent any
+    agent { label 'Windows' }
     environment {
         ARTIFACTORY_CRED = credentials('Jfrog_Artifactory')
-    }
-    tools {
-        jdk 'JDK17'
-        maven 'Maven'
-    }
-    parameters {
-        string(name: 'ARTIFACTORY_REPONAME', defaultValue: 'Test1', description: 'Artifactory repository to download')
-        string(name: 'ARTIFACTORY_FOLDER', defaultValue: '', description: 'Folder inside repo')
-        string(name: 'LOCAL_PATH', defaultValue: 'C:\\artifacts', description: 'Local folder to save artifacts')
     }
     stages {
         stage('Git checkout') {
