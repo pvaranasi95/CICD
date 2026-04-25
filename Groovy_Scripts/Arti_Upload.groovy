@@ -30,5 +30,12 @@ pipeline {
                 echo "Artifacts uploaded successfully to ${params.Artifactory_Target_Folder}"
             }
         }
+        stage('Clean Workspace') {
+            steps {
+                script {
+                    cleanWs()
+                }
+            }
+        }
     }
 }
