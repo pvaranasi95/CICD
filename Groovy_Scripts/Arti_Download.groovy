@@ -21,11 +21,9 @@ pipeline {
             steps {
                 script {
                     // Ensure local path exists
-                    bat "mkdir \"${params.LOCAL_PATH}\" || exit 0"
-
                     // Download using JFrog CLI
                     bat """
-            jf rt dl "Test//*" "C:\\artifacts\\" --flat=false --url=http://localhost:8082 --user=admin --password=%ARTIFACTORY_CRED_PSW%
+                    curl.exe -u admin:password -O ${params.Artifactory_Path}
                     """
                 }
                 echo "Artifacts downloaded successfully to ${params.LOCAL_PATH}"
