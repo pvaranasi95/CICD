@@ -30,5 +30,12 @@ pipeline {
                 echo "Artifacts downloaded successfully to ${params.Target_Dir}"
             }
         }
+       stage('Clean Workspace') {
+            steps {
+                script {
+                    cleanWs()
+                }
+            }
+        }
     }
 }
