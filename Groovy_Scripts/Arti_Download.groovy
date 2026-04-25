@@ -23,10 +23,11 @@ pipeline {
                     // Ensure local path exists
                     // Download using JFrog CLI
                     bat """
-                    curl.exe -u admin:password -O ${params.Artifactory_Path}
+                    curl.exe -u admin:password -o ${params.Target_Dir\${params.File} "http://localhost:8082/${params.Artifactory_Folder}/${params.File}"
+                    
                     """
                 }
-                echo "Artifacts downloaded successfully to ${params.LOCAL_PATH}"
+                echo "Artifacts downloaded successfully to ${params.Target_Dir}"
             }
         }
     }
